@@ -36,7 +36,7 @@ def start(parameter_list):
         get_and_add_docker_sonar_config(get_docker_path() + "/sonar/")
 
     print("Deploying Dockerized Jenkins server==============>")
-    get_and_add_docker_jenkins_config(get_docker_path() + "/jenkins/")
+    get_and_add_docker_jenkins_config(get_docker_path() + "/jenkins-ce/")
     check_jenkins_pem()
 
     # Deploy Gitlab docker and get configuration details

@@ -1,5 +1,6 @@
 resource "null_resource" "chef_provision_jenkins_server" {
   #TODO verify s3 dependency is valid
+  count = "${var.scmbb}"
   depends_on = ["aws_s3_bucket.jazz-web", "null_resource.update_jenkins_configs"]
   connection {
     host = "${lookup(var.jenkinsservermap, "jenkins_public_ip")}"
