@@ -1,15 +1,5 @@
-resource "null_resource" "chef_provision_jenkins_server" {
-  #TODO verify s3 dependency is valid
-  count = "${var.scmbb}"
+resource "null_resource" "preJenkinsConfiguration" {
   depends_on = ["aws_s3_bucket.jazz-web", "null_resource.update_jenkins_configs"]
-  connection {
-    host = "${lookup(var.jenkinsservermap, "jenkins_public_ip")}"
-    user = "${lookup(var.jenkinsservermap, "jenkins_ssh_login")}"
-    port = "${lookup(var.jenkinsservermap, "jenkins_ssh_port")}"
-    type = "ssh"
-    private_key = "${file("${lookup(var.jenkinsservermap, "jenkins_ssh_key")}")}"
-  }
-
   provisioner "local-exec" {
     command = "${var.configureJazzCore_cmd} ${var.envPrefix} ${var.cognito_pool_username}"
   }
@@ -74,6 +64,19 @@ resource "null_resource" "chef_provision_jenkins_server" {
     command = "sed -i 's|<password>gitlabpassword</password>|<password>${lookup(var.scmmap, "scm_passwd")}</password>|g' ${var.cookbooksSourceDir}/jenkins/files/credentials/gitlab-user.sh"
   }
   #END chef cookbook edits
+}
+
+resource "null_resource" "configureJenkinsInstance" {
+  #TODO verify s3 dependency is valid
+  count = "${var.scmbb}"
+  depends_on = ["null_resource.preJenkinsConfiguration", "aws_s3_bucket.jazz-web", "null_resource.update_jenkins_configs"]
+  connection {
+    host = "${lookup(var.jenkinsservermap, "jenkins_public_ip")}"
+    user = "${lookup(var.jenkinsservermap, "jenkins_ssh_login")}"
+    port = "${lookup(var.jenkinsservermap, "jenkins_ssh_port")}"
+    type = "ssh"
+    private_key = "${file("${lookup(var.jenkinsservermap, "jenkins_ssh_key")}")}"
+  }
 
   #Note that because the SSH connector is weird, we must manually create this directory
   #on the remote machine here before we copy things to it.
@@ -106,6 +109,21 @@ resource "null_resource" "chef_provision_jenkins_server" {
       "sudo chef-client --local-mode --config-option cookbook_path='${var.chefDestDir}/cookbooks' -j ${var.chefDestDir}/chefconfig/node-jenkinsserver-packages.json"
     ]
   }
+}
+
+resource "null_resource" "configureJenkinsDocker" {
+  #TODO verify s3 dependency is valid
+  count = "${var.scmgitlab}"
+  depends_on = ["null_resource.preJenkinsConfiguration", "aws_elasticsearch_domain.elasticsearch_domain"]
+  // Build a custom jenkins image
+  provisioner "local-exec" {
+    command = "bash ${var.launchJenkinsCE_cmd}"
+  }
+}
+
+resource "null_resource" "postJenkinsConfiguration" {
+
+  depends_on = ["null_resource.configureJenkinsInstance", "null_resource.configureJenkinsDocker", "aws_elasticsearch_domain.elasticsearch_domain"]
 
   provisioner "local-exec" {
     command = "${var.modifyCodebase_cmd}  ${lookup(var.jenkinsservermap, "jenkins_security_group")} ${lookup(var.jenkinsservermap, "jenkins_subnet")} ${aws_iam_role.lambda_role.arn} ${var.region} ${var.envPrefix} ${var.cognito_pool_username}"

@@ -8,7 +8,7 @@ execute 'chmodjenkinsscripts' do
   command "find #{node['cookbook_root']}/jenkins/files -type f -iname \"*.sh\" -exec chmod +x {} \\;"
 end
 
-directory '/var/lib/jenkins/workspace' do
+directory '/var/jenkins_home/workspace' do
   owner 'jenkins'
   group 'jenkins'
   mode '0777'
@@ -21,15 +21,6 @@ if node['platform_family'].include?('rhel')
   execute 'resizeJenkinsMemorySettings' do
     command "sudo sed -i 's/JENKINS_JAVA_OPTIONS=.*.$/JENKINS_JAVA_OPTIONS=\"-Djava.awt.headless=true -Xmx1024m -XX:MaxPermSize=512m\"/' /etc/sysconfig/jenkins"
   end
-end
-
-service 'jenkins' do
-  action :restart
-end
-
-# Wait a bit, Java apps don't coldboot very quickly...
-execute 'waitForFirstJenkinsRestart' do
-  command 'sleep 30'
 end
 
 # Try to fetch the version-appropriate Jenkins CLI jar from the server itself.
@@ -47,17 +38,17 @@ end
 
 execute 'copyXmls' do
   command "tar -xvf #{node['cookbook_root']}/jenkins/files/default/xmls.tar"
-  cwd '/var/lib/jenkins'
+  cwd '/var/jenkins_home'
 end
 
 execute 'copyConfigXml' do
   command "cp #{node['cookbook_root']}/jenkins/files/node/config.xml ."
-  cwd '/var/lib/jenkins'
+  cwd '/var/jenkins_home'
 end
 
 execute 'copyCredentialsXml' do
   command "cp #{node['cookbook_root']}/jenkins/files/credentials/credentials.xml ."
-  cwd '/var/lib/jenkins'
+  cwd '/var/jenkins_home'
 end
 
 # script approvals going in with  xmls.tar will be overwritten
@@ -79,17 +70,6 @@ end
 execute 'configuregitlabtoken' do
   only_if { node['scm'] == 'gitlab' }
   command "#{node['cookbook_root']}/jenkins/files/credentials/gitlab-token.sh #{node['jenkinselb']} #{node['jenkins']['clientjar']} #{node['authfile']}"
-end
-
-# TODO: we do this at the end, do we need it here?
-service 'jenkins' do
-  supports [:stop, :start, :restart]
-  action [:restart]
-end
-
-# Wait a bit, Java apps don't coldboot very quickly...
-execute 'waitForSecondJenkinsRestart' do
-  command 'sleep 30'
 end
 
 directory "#{node['chef_root']}/jazz-core" do
@@ -172,13 +152,8 @@ execute 'createJob-jazz_ui' do
   command "#{node['cookbook_root']}/jenkins/files/jobs/job_jazz_ui.sh #{node['jenkinselb']} #{node['jenkins']['clientjar']} #{node['authfile']} #{node['scmpath']}"
 end
 
-directory '/var/lib/jenkins' do
+directory '/var/jenkins_home' do
   owner 'jenkins'
   group 'jenkins'
   action :create
-end
-
-service 'jenkins' do
-  supports [:stop, :start, :restart]
-  action [:restart]
 end

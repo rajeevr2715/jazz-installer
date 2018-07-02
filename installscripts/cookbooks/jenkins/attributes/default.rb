@@ -1,4 +1,4 @@
-default['jenkins']['home'] = '/var/lib/jenkins'
+default['jenkins']['home'] = '/var/jenkins_home'
 default['chef_root'] = '/var/jenkins_home'
 default['cookbook_root'] = "#{node['chef_root']}/cookbooks"
 default['jenkins']['clientjar'] = "#{node['chef_root']}/jenkins-cli.jar"
