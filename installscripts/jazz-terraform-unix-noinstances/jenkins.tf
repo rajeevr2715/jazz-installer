@@ -69,6 +69,9 @@ resource "null_resource" "update_jenkins_configs" {
     command = "${var.configurescmelb_cmd} ${var.scmbb} ${lookup(var.scmmap, "scm_elb")} ${var.jenkinsattribsfile} ${var.jenkinsjsonpropsfile}"
   }
   provisioner "local-exec" {
+    command = "${var.configureJenkinscontainer_cmd} ${var.scenario2or3} ${var.jenkinsattribsfile} ${var.jenkinslocconfigfile}"
+  }
+  provisioner "local-exec" {
     command = "sed -i 's/\"jenkins_username\"/\"${lookup(var.jenkinsservermap, "jenkinsuser")}\"/g' ${var.jenkinsjsonpropsfile}"
   }
   provisioner "local-exec" {

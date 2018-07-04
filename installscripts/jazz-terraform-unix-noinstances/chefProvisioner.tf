@@ -68,7 +68,7 @@ resource "null_resource" "preJenkinsConfiguration" {
 
 resource "null_resource" "configureJenkinsInstance" {
   #TODO verify s3 dependency is valid
-  count = "${var.scmbb}"
+  count = "${var.scenario1}"
   depends_on = ["null_resource.preJenkinsConfiguration", "aws_s3_bucket.jazz-web", "null_resource.update_jenkins_configs"]
   connection {
     host = "${lookup(var.jenkinsservermap, "jenkins_public_ip")}"
@@ -113,7 +113,7 @@ resource "null_resource" "configureJenkinsInstance" {
 
 resource "null_resource" "configureJenkinsDocker" {
   #TODO verify s3 dependency is valid
-  count = "${var.scmgitlab}"
+  count = "${var.scenario2or3}"
   depends_on = ["null_resource.preJenkinsConfiguration", "aws_elasticsearch_domain.elasticsearch_domain"]
   // Build a custom jenkins image
   provisioner "local-exec" {

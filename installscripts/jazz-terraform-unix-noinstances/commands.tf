@@ -79,3 +79,7 @@ variable "pushInstallervars_cmd" {
   type= "string"
   default = "./scripts/pushInstallervars.sh"
 }
+variable "configureJenkinscontainer_cmd" {
+  type = "string"
+  default = "./scripts/configureJenkinscontainer.sh"
+}

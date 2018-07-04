@@ -8,7 +8,7 @@ execute 'chmodjenkinsscripts' do
   command "find #{node['cookbook_root']}/jenkins/files -type f -iname \"*.sh\" -exec chmod +x {} \\;"
 end
 
-directory '/var/jenkins_home/workspace' do
+directory "#{node['jenkins']['home']}/workspace" do
   owner 'jenkins'
   group 'jenkins'
   mode '0777'
@@ -38,17 +38,17 @@ end
 
 execute 'copyXmls' do
   command "tar -xvf #{node['cookbook_root']}/jenkins/files/default/xmls.tar"
-  cwd '/var/jenkins_home'
+  cwd "#{node['jenkins']['home']}"
 end
 
 execute 'copyConfigXml' do
   command "cp #{node['cookbook_root']}/jenkins/files/node/config.xml ."
-  cwd '/var/jenkins_home'
+  cwd "#{node['jenkins']['home']}"
 end
 
 execute 'copyCredentialsXml' do
   command "cp #{node['cookbook_root']}/jenkins/files/credentials/credentials.xml ."
-  cwd '/var/jenkins_home'
+  cwd "#{node['jenkins']['home']}"
 end
 
 # script approvals going in with  xmls.tar will be overwritten
@@ -152,7 +152,7 @@ execute 'createJob-jazz_ui' do
   command "#{node['cookbook_root']}/jenkins/files/jobs/job_jazz_ui.sh #{node['jenkinselb']} #{node['jenkins']['clientjar']} #{node['authfile']} #{node['scmpath']}"
 end
 
-directory '/var/jenkins_home' do
+directory "#{node['jenkins']['home']}" do
   owner 'jenkins'
   group 'jenkins'
   action :create

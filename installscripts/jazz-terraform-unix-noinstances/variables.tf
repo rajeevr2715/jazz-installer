@@ -42,6 +42,10 @@ variable "jenkinsattribsfile" {
   type = "string"
   default = "../cookbooks/jenkins/attributes/default.rb"
 }
+variable "jenkinslocconfigfile" {
+  type = "string"
+  default = "../cookbooks/jenkins/files/node/configJenkinsLocConfigXml.sh"
+}
 variable "jenkinsservermap" {
   type = "map"
   default = {
@@ -108,3 +112,5 @@ variable "scmbb" { default = true }
 variable "scmgitlab" { default = false }
 variable "codeq" { default = false }
 variable "atlassian_jar_path" { type = "string" }
+variable "scenario1" {default = true}
+variable "scenario2or3" {default = false}
