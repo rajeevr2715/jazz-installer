@@ -23,6 +23,16 @@ if node['platform_family'].include?('rhel')
   end
 end
 
+if node['scm'] == 'bitbucket'
+  service 'jenkins' do
+    action [:restart]
+  end
+  # Wait a bit, Java apps don't coldboot very quickly...
+  execute 'waitForFirstJenkinsRestart' do
+    command 'sleep 30'
+  end
+end
+
 # Try to fetch the version-appropriate Jenkins CLI jar from the server itself.
 execute 'copyJenkinsClientJar' do
   command "curl -sL http://#{node['jenkinselb']}/jnlpJars/jenkins-cli.jar -o #{node['chef_root']}/jenkins-cli.jar; chmod 755 #{node['jenkins']['clientjar']}"
@@ -36,7 +46,7 @@ execute 'copyEncryptGroovyScript' do
   command "cp #{node['cookbook_root']}/jenkins/files/default/encrypt.groovy #{node['chef_root']}/encrypt.groovy"
 end
 
-execute 'copyXmls' do
+  execute 'copyXmls' do
   command "tar -xvf #{node['cookbook_root']}/jenkins/files/default/xmls.tar"
   cwd "#{node['jenkins']['home']}"
 end
@@ -70,6 +80,16 @@ end
 execute 'configuregitlabtoken' do
   only_if { node['scm'] == 'gitlab' }
   command "#{node['cookbook_root']}/jenkins/files/credentials/gitlab-token.sh #{node['jenkinselb']} #{node['jenkins']['clientjar']} #{node['authfile']}"
+end
+
+if node['scm'] == 'bitbucket'
+  service 'jenkins' do
+    action [:restart]
+  end
+  # Wait a bit, Java apps don't coldboot very quickly...
+  execute 'waitForFirstJenkinsRestart' do
+    command 'sleep 30'
+  end
 end
 
 directory "#{node['chef_root']}/jazz-core" do
