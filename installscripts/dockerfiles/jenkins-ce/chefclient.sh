@@ -33,10 +33,10 @@ spin_wheel()
 
 
 cd ~/jazz-installer/installscripts
-sudo docker cp cookbooks/. jenkins-server:/var/jenkins_home/cookbooks/
-sudo docker cp chefconfig/. jenkins-server:/var/jenkins_home/chefconfig/
+sudo docker cp cookbooks/. jenkins-server:/tmp/jazz-chef/cookbooks/
+sudo docker cp chefconfig/. jenkins-server:/tmp/jazz-chef/chefconfig/
 # Running chef-client to execute cookbooks
-sudo docker exec -u root -i jenkins-server sudo chef-client --local-mode --config-option cookbook_path=/var/jenkins_home/cookbooks -j /var/jenkins_home/chefconfig/node-jenkinsserver-packages.json
+sudo docker exec -u root -i jenkins-server sudo chef-client --local-mode --config-option cookbook_path=/tmp/jazz-chef/cookbooks -j /tmp/jazz-chef/chefconfig/node-jenkinsserver-packages.json
 
 # Once the docker image is configured, we will commit the image.
 sudo docker commit -m "JazzOSS-Custom Jenkins container" jenkins-server jazzoss-jenkins-server

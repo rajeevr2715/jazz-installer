@@ -157,3 +157,10 @@ directory '/var/jenkins_home' do
   group 'jenkins'
   action :create
 end
+
+if node['scm'] == 'bitbucket'
+  service 'jenkins' do
+    supports [:stop, :start, :restart]
+    action [:restart]
+  end
+end

@@ -11,16 +11,17 @@ COPY dockerfiles/jenkins-ce/plugins.txt /usr/share/jenkins/ref/plugins.txt
 RUN /usr/local/bin/install-plugins.sh < /usr/share/jenkins/ref/plugins.txt
 
 # Copy the chef recipes, chefconfigs and bootstrap script
-COPY --chown=jenkins:jenkins cookbooks  /var/jenkins_home/cookbooks
-COPY --chown=jenkins:jenkins chefconfig /var/jenkins_home/chefconfig
-COPY --chown=jenkins:jenkins dockerfiles/jenkins-ce/bootstrap.sh /var/jenkins_home/bootstrap.sh
+COPY --chown=jenkins:jenkins cookbooks  /tmp/jazz-chef/cookbooks
+COPY --chown=jenkins:jenkins chefconfig /tmp/jazz-chef/chefconfig
+COPY --chown=jenkins:jenkins dockerfiles/jenkins-ce/bootstrap.sh /tmp/jazz-chef/bootstrap.sh
 
+RUN chown -R jenkins:jenkins /tmp/jazz-chef
 # Creating node_path directory
 RUN mkdir /var/jenkins_home/node
 
 # Setting execute bit and executing the bootstrap script
-RUN chmod 777 /var/jenkins_home/bootstrap.sh
-RUN bash /var/jenkins_home/bootstrap.sh
+RUN chmod 777 /tmp/jazz-chef/bootstrap.sh
+RUN bash /tmp/jazz-chef/bootstrap.sh
 
 # Switching back to Jenkins user for safety
 USER jenkins
