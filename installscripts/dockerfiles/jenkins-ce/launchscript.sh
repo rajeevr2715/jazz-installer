@@ -81,7 +81,7 @@ sudo docker run -d --name jenkins-server -p 8081:8080 -v jenkins-volume:/var/jen
 # Wainting for the container to spin up
 sleep 60
 echo "initialPassword is: $passwd"
-sudo docker exec -i jenkins-server bash -c "echo 'admin:$passwd' > /tmp/jazz-chef/authfile"
+sudo docker exec -u root -i jenkins-server bash -c "echo 'admin:$passwd' > /tmp/jazz-chef/authfile"
 
 # Grab the variables
 ip=`curl -sL http://169.254.169.254/latest/meta-data/public-ipv4`
