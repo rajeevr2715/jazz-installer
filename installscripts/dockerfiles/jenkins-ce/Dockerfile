@@ -15,7 +15,15 @@ dpkg -i chefdk.deb && apt-get update && \
 apt-get install -y vim curl sudo libtool autoconf make unzip rsync gcc autogen shtool pkg-config lsb-release python python-dev python-pip python-setuptools groff less && \
 pip install --upgrade awscli && apt-get clean && wget -O /opt/apache-maven-3.5.2-bin.tar.gz https://archive.apache.org/dist/maven/maven-3/3.5.2/binaries/apache-maven-3.5.2-bin.tar.gz && \
 tar xzvf /opt/apache-maven-3.5.2-bin.tar.gz -C  /opt && export PATH=$PATH:/opt/apache-maven-3.5.2/bin >> /etc/profile.d/maven.sh && ln -sf /opt/apache-maven-3.5.2/bin/mvn /usr/bin/mvn && \
-curl -sL https://deb.nodesource.com/setup_8.x | bash && apt-get install -y nodejs && npm install  -global serverless@1.26.1 @angular/cli@1.7.3 jshint
+curl -sL https://deb.nodesource.com/setup_8.x | bash && apt-get install -y nodejs && npm install  -global serverless@1.26.1 @angular/cli@1.7.3 jshint && \
+wget -O /opt/sonar-scanner-cli-3.0.3.778-linux.zip https://sonarsource.bintray.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-3.0.3.778-linux.zip && \
+unzip /opt/sonar-scanner-cli-3.0.3.778-linux.zip -d /opt && chown -R jenkins:jenkins /opt/sonar-scanner-3.0.3.778-linux && \
+ln -sf /opt/sonar-scanner-3.0.3.778-linux/bin/sonar-scanner /bin/sonar-scanner && mkdir /var/log/depcheck_jazz/ && \
+mkdir /var/log/depcheck_jazz/nistfiles && chown -R jenkins:jenkins /var/log/depcheck_jazz/ && \
+wget -O /opt/dependency-check-3.2.1-release.zip https://bintray.com/jeremy-long/owasp/download_file?file_path=dependency-check-3.2.1-release.zip && \
+unzip /opt/dependency-check-3.2.1-release.zip -d /opt && chown -R jenkins:jenkins /opt/dependency-check && \
+ln -sf /opt//dependency-check/bin/dependency-check.sh /bin/dependency-check.sh && \
+wget -O /opt/checkstyle-7.6-all.jar https://github.com/checkstyle/checkstyle/releases/download/checkstyle-7.6.1/checkstyle-7.6.1-all.jar
 
 # Copying plugins list. Downlading and installing plugins from Jenkins PluginsManager
 COPY dockerfiles/jenkins-ce/plugins.txt /usr/share/jenkins/ref/plugins.txt
