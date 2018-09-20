@@ -112,5 +112,11 @@
         "SLACK_TOKEN": "{slack_token}",
         "SLACK_WORKSPACE": "{slack_workspace}",
         "SLACK_SVC_ID": "{slack_svc_acc_id}"
-    }
+    },
+    "SPLUNK": {
+        "ENABLE_SPLUNK": true,
+        "ENDPOINT": "https://splunk-http.t-mobile.com:8088/services/collector",
+        "HEC_TOKEN": "725D0687-3BF7-48CB-8C33-9E51A15D60EF",
+        "INDEX": "jazz"
+ }
 }
