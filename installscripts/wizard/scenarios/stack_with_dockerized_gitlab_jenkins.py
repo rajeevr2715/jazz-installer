@@ -2,10 +2,18 @@
 import os
 import sys
 import subprocess
-from support.jazz_common import get_script_folder, get_jenkins_pem, get_docker_path, get_terraform_folder, parse_and_replace_parameter_list
+from support.jazz_common import (
+    get_script_folder,
+    get_jenkins_pem,
+    get_docker_path,
+    get_terraform_folder,
+    parse_and_replace_parameter_list
+)
 from support.jazz_jenkins import get_and_add_docker_jenkins_config
 from support.jazz_gitlab import get_and_add_docker_gitlab_config
 from support.jazz_sonar import get_and_add_docker_sonar_config
+from support.jazz_splunk import get_and_add_splunk_config
+
 
 def check_jenkins_pem():
     """
@@ -35,6 +43,8 @@ def start(parameter_list):
         print("Deploying Dockerized SonarQube server==============>")
         get_and_add_docker_sonar_config(get_docker_path() + "/sonar/")
 
+    get_and_add_splunk_config(get_terraform_folder())
+
     print("Deploying Dockerized Jenkins server==============>")
     get_and_add_docker_jenkins_config(get_docker_path() + "/jenkins-ce/")
 
@@ -53,7 +63,8 @@ def start(parameter_list):
     subprocess.call('cp ./scripts/destroy.sh ../../'.split(' '))
 
     print(
-        "\n\nPlease execute  tail -f stack_creation.out | grep 'Creation complete' in the below directory to see the stack creation progress "
+        "\n\nPlease execute  tail -f stack_creation.out | grep 'Creation complete' \
+        in the below directory to see the stack creation progress "
     )
     print(os.path.realpath('../../'))
     print("\n\n")

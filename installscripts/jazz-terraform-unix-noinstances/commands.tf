@@ -22,6 +22,10 @@ variable "configureSonar_cmd" {
   type = "string"
   default = "./scripts/configureSonar.sh"
 }
+variable "configureSplunk_cmd" {
+  type = "string"
+  default = "./scripts/configureSplunk.sh"
+}
 variable "modifyCodebase_cmd" {
   type = "string"
   default = "./scripts/modifyCodebase.sh"

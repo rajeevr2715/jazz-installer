@@ -89,6 +89,19 @@ variable "codeqmap" {
 }
 
 #
+# Splunk - Splunk variables
+#
+variable "splunkmap" {
+  type = "map"
+  default = {
+    splunk_enable = "false"
+    splunk_endpoint = "replaceme"
+    splunk_token = "replaceme"
+    splunk_index = "replaceme"
+  }
+}
+
+#
 # AWS resource variables
 #
 variable "lambdaCloudWatchProps" {

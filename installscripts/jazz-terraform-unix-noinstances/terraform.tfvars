@@ -45,6 +45,14 @@ codeqmap = {
   sonar_server_public_ip = "REPLACEME"
 }
 
+#Splunk server map (set programmatically by wizard, not directly by user or terraform)
+splunkmap = {
+  splunk_enable = "false"
+  splunk_endpoint = "REPLACEME"
+  splunk_token = "REPLACEME"
+  splunk_index = "REPLACEME"
+}
+
 scmbb = true
 scmgitlab = false
 codeq = false
