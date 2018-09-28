@@ -130,7 +130,7 @@ resource "aws_cloudwatch_log_subscription_filter" "logfilter-dev" {
   role_arn        = "${aws_iam_role.lambda_role.arn}"
   log_group_name  = "${aws_cloudwatch_log_group.API-Gateway-Execution-Logs_dev.name}"
   filter_pattern  = ""
-  destination_arn = "${aws_kinesis_stream.logs_stream_dev.arn}"
+  destination_arn = "${aws_kinesis_stream.logs_stream_prod.arn}"
   distribution    = "Random"
 }
 
@@ -139,7 +139,7 @@ resource "aws_cloudwatch_log_subscription_filter" "logfilter-stg" {
   role_arn        = "${aws_iam_role.lambda_role.arn}"
   log_group_name  = "${aws_cloudwatch_log_group.API-Gateway-Execution-Logs_stg.name}"
   filter_pattern  = ""
-  destination_arn = "${aws_kinesis_stream.logs_stream_stg.arn}"
+  destination_arn = "${aws_kinesis_stream.logs_stream_prod.arn}"
   distribution    = "Random"
 }
 
