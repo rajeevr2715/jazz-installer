@@ -111,17 +111,17 @@ resource "aws_api_gateway_rest_api" "jazz-prod" {
 }
 
 resource "aws_cloudwatch_log_group" "API-Gateway-Execution-Logs_dev" {
-  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.jazz-dev.id}"
+  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.jazz-dev.id}/dev"
   tags = "${merge(var.additional_tags, local.common_tags)}"
 }
 
 resource "aws_cloudwatch_log_group" "API-Gateway-Execution-Logs_stg" {
-  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.jazz-stg.id}"
+  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.jazz-stg.id}/stg"
   tags = "${merge(var.additional_tags, local.common_tags)}"
 }
 
 resource "aws_cloudwatch_log_group" "API-Gateway-Execution-Logs_prod" {
-  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.jazz-prod.id}"
+  name = "API-Gateway-Execution-Logs_${aws_api_gateway_rest_api.jazz-prod.id}/prod"
   tags = "${merge(var.additional_tags, local.common_tags)}"
 }
 
@@ -150,6 +150,10 @@ resource "aws_cloudwatch_log_subscription_filter" "logfilter-prod" {
   filter_pattern  = ""
   destination_arn = "${aws_kinesis_stream.logs_stream_prod.arn}"
   distribution    = "Random"
+}
+
+resource "aws_api_gateway_account" "cloudwatchlogroleupdate" {
+  cloudwatch_role_arn = "${aws_iam_role.lambda_role.arn}"
 }
 
 resource "aws_s3_bucket" "jazz-web" {
@@ -252,6 +256,11 @@ EOF
     on_failure = "continue"
     command = "aws iam detach-role-policy --role-name ${aws_iam_role.lambda_role.name} --policy-arn arn:aws:iam::aws:policy/AmazonCognitoPowerUser"
   }
+  provisioner "local-exec" {
+    when = "destroy"
+    on_failure = "continue"
+    command = "aws iam detach-role-policy --role-name ${aws_iam_role.lambda_role.name} --policy-arn arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+  }
 }
 
 resource "aws_iam_role_policy" "basic_execution_policy" {
@@ -297,6 +306,10 @@ resource "aws_iam_role_policy_attachment" "s3fullaccess" {
 resource "aws_iam_role_policy_attachment" "cognitopoweruser" {
   role       = "${aws_iam_role.lambda_role.name}"
   policy_arn = "arn:aws:iam::aws:policy/AmazonCognitoPowerUser"
+}
+resource "aws_iam_role_policy_attachment" "pushtocloudwatchlogs" {
+  role       = "${aws_iam_role.lambda_role.name}"
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
 }
 resource "aws_s3_bucket" "dev-serverless-static" {
   bucket_prefix = "${var.envPrefix}-dev-web-"
