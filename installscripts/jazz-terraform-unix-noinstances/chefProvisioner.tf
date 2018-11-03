@@ -104,9 +104,9 @@ resource "null_resource" "configureJenkinsInstance" {
     ]
   }
 }
-
+# For new vpc
 data "external" "gitlabcontainer" {
-  count = "${var.scmgitlab}"
+  count = "${var.dockerizedJenkins * var.autovpc * var.scmgitlab}"
   program = ["bash", "${var.configureGitlab_cmd}"]
 
   query = {
@@ -116,13 +116,33 @@ data "external" "gitlabcontainer" {
   }
   depends_on = ["aws_ecs_service.ecs_service_gitlab"]
 }
+# For existing vpc
+data "external" "gitlabcontainer_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab}"
+  program = ["bash", "${var.configureGitlab_cmd}"]
 
+  query = {
+    passwd = "${var.cognito_pool_password}"
+    ip = "${aws_lb.alb_ecs_gitlab_existing.dns_name}"
+    gitlab_admin = "${lookup(var.scmmap, "scm_username")}"
+  }
+  depends_on = ["aws_ecs_service.ecs_service_gitlab_existing"]
+}
+# For new vpc
 resource "null_resource" "configureCodeqDocker" {
-  count = "${var.dockerizedSonarqube}"
+  count = "${var.dockerizedJenkins * var.autovpc * var.dockerizedSonarqube}"
   provisioner "local-exec" {
     command = "python ${var.configureCodeq_cmd} ${aws_lb.alb_ecs_codeq.dns_name} ${lookup(var.codeqmap, "sonar_passwd")}"
   }
   depends_on = ["aws_ecs_service.ecs_service_codeq"]
+}
+# For existing vpc
+resource "null_resource" "configureCodeqDocker_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.dockerizedSonarqube}"
+  provisioner "local-exec" {
+    command = "python ${var.configureCodeq_cmd} ${aws_lb.alb_ecs_codeq_existing.dns_name} ${lookup(var.codeqmap, "sonar_passwd")}"
+  }
+  depends_on = ["aws_ecs_service.ecs_service_codeq_existing"]
 }
 
 # For scenario1
@@ -136,27 +156,47 @@ resource "null_resource" "configureCliJenkins" {
 }
 
 # For scenario2 (Jenkins ALB)
+# For new vpc
 resource "null_resource" "configureCliJenkinsbb_dockerized" {
-  count = "${var.scmbb * var.dockerizedJenkins}"
+  count = "${var.autovpc * var.scmbb * var.dockerizedJenkins}"
   depends_on = ["null_resource.preJenkinsConfiguration"]
   #Jenkins Cli process
   provisioner "local-exec" {
     command = "bash ${var.configureJenkinsCE_cmd} ${aws_lb.alb_ecs.dns_name} ${var.cognito_pool_username} ${var.dockerizedJenkins} ${lookup(var.scmmap, "scm_elb")} ${lookup(var.scmmap, "scm_username")} ${lookup(var.scmmap, "scm_passwd")} ${lookup(var.scmmap, "scm_passwd")} ${lookup(var.jenkinsservermap, "jenkinspasswd")} ${lookup(var.scmmap, "scm_type")} ${lookup(var.codeqmap, "sonar_username")} ${lookup(var.codeqmap, "sonar_passwd")} ${aws_iam_access_key.operational_key.id} ${aws_iam_access_key.operational_key.secret} ${var.cognito_pool_password} ${lookup(var.jenkinsservermap, "jenkinsuser")}"
   }
 }
+# For existing vpc
+resource "null_resource" "configureCliJenkinsbb_dockerized_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmbb * var.dockerizedJenkins}"
+  depends_on = ["null_resource.preJenkinsConfiguration"]
+  #Jenkins Cli process
+  provisioner "local-exec" {
+    command = "bash ${var.configureJenkinsCE_cmd} ${aws_lb.alb_ecs_existing.dns_name} ${var.cognito_pool_username} ${var.dockerizedJenkins} ${lookup(var.scmmap, "scm_elb")} ${lookup(var.scmmap, "scm_username")} ${lookup(var.scmmap, "scm_passwd")} ${lookup(var.scmmap, "scm_passwd")} ${lookup(var.jenkinsservermap, "jenkinspasswd")} ${lookup(var.scmmap, "scm_type")} ${lookup(var.codeqmap, "sonar_username")} ${lookup(var.codeqmap, "sonar_passwd")} ${aws_iam_access_key.operational_key.id} ${aws_iam_access_key.operational_key.secret} ${var.cognito_pool_password} ${lookup(var.jenkinsservermap, "jenkinsuser")}"
+  }
+}
 
 # For scenario3 (Jenkins and Gitlab ALB)
+# For new vpc
 resource "null_resource" "configureCliJenkins_dockerized" {
-  count = "${var.scmgitlab * var.dockerizedJenkins}"
+  count = "${var.autovpc * var.scmgitlab * var.dockerizedJenkins}"
   depends_on = ["null_resource.preJenkinsConfiguration"]
   #Jenkins Cli process
   provisioner "local-exec" {
     command = "bash ${var.configureJenkinsCE_cmd} ${aws_lb.alb_ecs.dns_name} ${var.cognito_pool_username} ${var.dockerizedJenkins} ${aws_lb.alb_ecs_gitlab.dns_name} ${lookup(var.scmmap, "scm_username")} ${lookup(var.scmmap, "scm_passwd")} ${data.external.gitlabcontainer.result.token} ${lookup(var.jenkinsservermap, "jenkinspasswd")} ${lookup(var.scmmap, "scm_type")} ${lookup(var.codeqmap, "sonar_username")} ${lookup(var.codeqmap, "sonar_passwd")} ${aws_iam_access_key.operational_key.id} ${aws_iam_access_key.operational_key.secret} ${var.cognito_pool_password} ${lookup(var.jenkinsservermap, "jenkinsuser")}"
   }
 }
+# For existing vpc
+resource "null_resource" "configureCliJenkins_dockerized_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab * var.dockerizedJenkins}"
+  depends_on = ["null_resource.preJenkinsConfiguration"]
+  #Jenkins Cli process
+  provisioner "local-exec" {
+    command = "bash ${var.configureJenkinsCE_cmd} ${aws_lb.alb_ecs_existing.dns_name} ${var.cognito_pool_username} ${var.dockerizedJenkins} ${aws_lb.alb_ecs_gitlab_existing.dns_name} ${lookup(var.scmmap, "scm_username")} ${lookup(var.scmmap, "scm_passwd")} ${data.external.gitlabcontainer_existing.result.token} ${lookup(var.jenkinsservermap, "jenkinspasswd")} ${lookup(var.scmmap, "scm_type")} ${lookup(var.codeqmap, "sonar_username")} ${lookup(var.codeqmap, "sonar_passwd")} ${aws_iam_access_key.operational_key.id} ${aws_iam_access_key.operational_key.secret} ${var.cognito_pool_password} ${lookup(var.jenkinsservermap, "jenkinsuser")}"
+  }
+}
 
 resource "null_resource" "postJenkinsConfiguration" {
-  depends_on = ["null_resource.configureCliJenkins", "null_resource.configureCliJenkinsbb_dockerized", "null_resource.configureCliJenkins_dockerized"]
+  depends_on = ["null_resource.configureCliJenkins", "null_resource.configureCliJenkinsbb_dockerized", "null_resource.configureCliJenkinsbb_dockerized_existing", "null_resource.configureCliJenkins_dockerized", "null_resource.configureCliJenkins_dockerized_existing"]
   provisioner "local-exec" {
     command = "${var.modifyCodebase_cmd}  ${lookup(var.jenkinsservermap, "jenkins_security_group")} ${lookup(var.jenkinsservermap, "jenkins_subnet")} ${aws_iam_role.lambda_role.arn} ${var.region} ${var.envPrefix} ${var.cognito_pool_username}"
   }
@@ -173,11 +213,21 @@ resource "null_resource" "injectingBootstrapToJenkins" {
 }
 
 # For Gitlab
+# For new vpc
 resource "null_resource" "injectingBootstrapToJenkins_gitlab" {
-  count = "${var.scmgitlab}"
+  count = "${var.autovpc * var.scmgitlab}"
   depends_on = ["null_resource.postJenkinsConfiguration"]
   // Injecting bootstrap variables into Jazz-core Jenkinsfiles*
   provisioner "local-exec" {
     command = "${var.injectingBootstrapToJenkinsfiles_cmd} ${aws_lb.alb_ecs_gitlab.dns_name} ${lookup(var.scmmap, "scm_type")}"
+  }
+}
+# For existing vpc
+resource "null_resource" "injectingBootstrapToJenkins_gitlab_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab}"
+  depends_on = ["null_resource.postJenkinsConfiguration"]
+  // Injecting bootstrap variables into Jazz-core Jenkinsfiles*
+  provisioner "local-exec" {
+    command = "${var.injectingBootstrapToJenkinsfiles_cmd} ${aws_lb.alb_ecs_gitlab_existing.dns_name} ${lookup(var.scmmap, "scm_type")}"
   }
 }

@@ -93,11 +93,21 @@ resource "null_resource" "update_jenkins_configs" {
 }
 
 # Dockerized CODE_QUALITY
+# For new vpc
 resource "null_resource" "codeq_dockerized" {
-  count = "${var.dockerizedSonarqube}"
+  count = "${var.dockerizedJenkins * var.autovpc * var.dockerizedSonarqube}"
   depends_on = ["aws_ecs_service.ecs_service_codeq"]
   #SONAR
   provisioner "local-exec" {
     command = "${var.configureSonar_cmd} ${aws_lb.alb_ecs_codeq.dns_name} ${var.codeq} ${var.jenkinsjsonpropsfile}"
+  }
+}
+# For existing vpc
+resource "null_resource" "codeq_dockerized_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.dockerizedSonarqube}"
+  depends_on = ["aws_ecs_service.ecs_service_codeq_existing"]
+  #SONAR
+  provisioner "local-exec" {
+    command = "${var.configureSonar_cmd} ${aws_lb.alb_ecs_codeq_existing.dns_name} ${var.codeq} ${var.jenkinsjsonpropsfile}"
   }
 }

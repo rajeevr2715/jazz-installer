@@ -134,6 +134,8 @@ def get_and_add_docker_jenkins_config(jenkins_docker_path):
         """\nWould you like to use existing VPC for ECS? [y/n] :""")
     if use_existing_vpc == 'y':
         existing_vpc_id = raw_input("Enter the VPC ID :")
+        existing_security_group = raw_input("Enter the Security Group ID :")
+        replace_tfvars('existing_vpc_sg', existing_security_group, get_tfvars_file())
         replace_tfvars('existing_vpc_ecs', existing_vpc_id, get_tfvars_file())
     else:
         replace_tfvars_map("autovpc", "true", get_tfvars_file())

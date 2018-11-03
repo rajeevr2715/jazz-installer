@@ -51,29 +51,88 @@ resource "aws_cloudwatch_log_group" "ecs_fargates_cwlogs" {
   retention_in_days = 7
 }
 
+# For new vpc, seucirty groups
+resource "aws_security_group_rule" "codeq_sg" {
+  count = "${var.dockerizedJenkins * var.autovpc}"
+  type            = "ingress"
+  from_port       = 9000
+  to_port         = 9000
+  protocol        = "tcp"
+  self            = true
+  security_group_id = "${aws_vpc.vpc_for_ecs.default_security_group_id}"
+}
+resource "aws_security_group_rule" "codeq_public" {
+  count = "${var.dockerizedJenkins * var.autovpc}"
+  type            = "ingress"
+  from_port       = 9000
+  to_port         = 9000
+  protocol        = "tcp"
+  cidr_blocks     = ["0.0.0.0/0"]
+  security_group_id = "${aws_vpc.vpc_for_ecs.default_security_group_id}"
+}
+resource "aws_security_group_rule" "gitlab_sg" {
+  count = "${var.dockerizedJenkins * var.autovpc}"
+  type            = "ingress"
+  from_port       = 80
+  to_port         = 80
+  protocol        = "tcp"
+  self            = true
+  security_group_id = "${aws_vpc.vpc_for_ecs.default_security_group_id}"
+}
+resource "aws_security_group_rule" "gitlab_public" {
+  count = "${var.dockerizedJenkins * var.autovpc}"
+  type            = "ingress"
+  from_port       = 80
+  to_port         = 80
+  protocol        = "tcp"
+  cidr_blocks     = ["0.0.0.0/0"]
+  security_group_id = "${aws_vpc.vpc_for_ecs.default_security_group_id}"
+}
+resource "aws_security_group_rule" "jenkins_sg" {
+  count = "${var.dockerizedJenkins * var.autovpc}"
+  type            = "ingress"
+  from_port       = 8080
+  to_port         = 8080
+  protocol        = "tcp"
+  self            = true
+  security_group_id = "${aws_vpc.vpc_for_ecs.default_security_group_id}"
+}
+resource "aws_security_group_rule" "jenkins_public" {
+  count = "${var.dockerizedJenkins * var.autovpc}"
+  type            = "ingress"
+  from_port       = 8080
+  to_port         = 8080
+  protocol        = "tcp"
+  cidr_blocks     = ["0.0.0.0/0"]
+  security_group_id = "${aws_vpc.vpc_for_ecs.default_security_group_id}"
+}
+
+
+# For Existing VPC, update existing SG
 resource "null_resource" "ecs_securitygroups" {
+  count = "${var.dockerizedJenkins - var.autovpc}"
   provisioner "local-exec" {
-    command    = "aws ec2 authorize-security-group-ingress --group-id ${aws_vpc.vpc_for_ecs.default_security_group_id} --protocol tcp --port 80 --cidr '0.0.0.0/0' --region ${var.region}"
+    command    = "aws ec2 authorize-security-group-ingress --group-id ${var.existing_vpc_sg} --protocol tcp --port 80 --cidr '0.0.0.0/0' --region ${var.region}"
     on_failure = "continue"
   }
   provisioner "local-exec" {
-    command    = "aws ec2 authorize-security-group-ingress --group-id ${aws_vpc.vpc_for_ecs.default_security_group_id} --protocol tcp --port 80 --source-group ${aws_vpc.vpc_for_ecs.default_security_group_id} --region ${var.region}"
+    command    = "aws ec2 authorize-security-group-ingress --group-id ${var.existing_vpc_sg} --protocol tcp --port 80 --source-group ${var.existing_vpc_sg} --region ${var.region}"
     on_failure = "continue"
   }
   provisioner "local-exec" {
-    command    = "aws ec2 authorize-security-group-ingress --group-id ${aws_vpc.vpc_for_ecs.default_security_group_id} --protocol tcp --port 8080 --cidr '0.0.0.0/0' --region ${var.region}"
+    command    = "aws ec2 authorize-security-group-ingress --group-id ${var.existing_vpc_sg} --protocol tcp --port 8080 --cidr '0.0.0.0/0' --region ${var.region}"
     on_failure = "continue"
   }
   provisioner "local-exec" {
-    command    = "aws ec2 authorize-security-group-ingress --group-id ${aws_vpc.vpc_for_ecs.default_security_group_id} --protocol tcp --port 8080 --source-group ${aws_vpc.vpc_for_ecs.default_security_group_id} --region ${var.region}"
+    command    = "aws ec2 authorize-security-group-ingress --group-id ${var.existing_vpc_sg} --protocol tcp --port 8080 --source-group ${var.existing_vpc_sg} --region ${var.region}"
     on_failure = "continue"
   }
   provisioner "local-exec" {
-    command    = "aws ec2 authorize-security-group-ingress --group-id ${aws_vpc.vpc_for_ecs.default_security_group_id} --protocol tcp --port 9000 --cidr '0.0.0.0/0' --region ${var.region}"
+    command    = "aws ec2 authorize-security-group-ingress --group-id ${var.existing_vpc_sg} --protocol tcp --port 9000 --cidr '0.0.0.0/0' --region ${var.region}"
     on_failure = "continue"
   }
   provisioner "local-exec" {
-    command    = "aws ec2 authorize-security-group-ingress --group-id ${aws_vpc.vpc_for_ecs.default_security_group_id} --protocol tcp --port 9000 --source-group ${aws_vpc.vpc_for_ecs.default_security_group_id} --region ${var.region}"
+    command    = "aws ec2 authorize-security-group-ingress --group-id ${var.existing_vpc_sg} --protocol tcp --port 9000 --source-group ${var.existing_vpc_sg} --region ${var.region}"
     on_failure = "continue"
   }
 }
@@ -168,9 +227,9 @@ resource "aws_ecs_task_definition" "ecs_task_definition_codeq" {
   execution_role_arn       = "${aws_iam_role.ecs_execution_role.arn}"
   task_role_arn            = "${aws_iam_role.ecs_execution_role.arn}"
 }
-
+# For new VPC
 resource "aws_alb_target_group" "alb_target_group" {
-  count = "${var.dockerizedJenkins}"
+  count = "${var.dockerizedJenkins * var.autovpc}"
   name     = "${var.envPrefix}-ecs-tg"
   port     = 80
   protocol = "HTTP"
@@ -188,9 +247,29 @@ resource "aws_alb_target_group" "alb_target_group" {
     timeout          = "59"
   }
 }
+# For existing VPC
+resource "aws_alb_target_group" "alb_target_group_existing" {
+  count = "${var.dockerizedJenkins - var.autovpc}"
+  name     = "${var.envPrefix}-ecs-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = "${data.aws_vpc.existing_vpc.id}"
+  target_type = "ip"
 
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  health_check {
+    path             = "/login"
+    matcher          = "200"
+    interval         = "60"
+    timeout          = "59"
+  }
+}
+# For new vpc
 resource "aws_alb_target_group" "alb_target_group_gitlab" {
- count = "${var.scmgitlab}"
+ count = "${var.dockerizedJenkins * var.autovpc * var.scmgitlab}"
   name     = "${var.envPrefix}-ecs-gitlab-tg"
   port     = 80
   protocol = "HTTP"
@@ -209,8 +288,30 @@ resource "aws_alb_target_group" "alb_target_group_gitlab" {
   }
 }
 
+# For existing vpc
+resource "aws_alb_target_group" "alb_target_group_gitlab_existing" {
+ count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab}"
+  name     = "${var.envPrefix}-ecs-gitlab-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = "${data.aws_vpc.existing_vpc.id}"
+  target_type = "ip"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  health_check {
+    path             = "/users/sign_in"
+    matcher          = "200"
+    interval         = "60"
+    timeout          = "59"
+  }
+}
+
+# For new vpc
 resource "aws_alb_target_group" "alb_target_group_codeq" {
-  count = "${var.dockerizedSonarqube}"
+  count = "${var.dockerizedJenkins * var.autovpc * var.dockerizedSonarqube}"
   name     = "${var.envPrefix}-ecs-codeq-tg"
   port     = 80
   protocol = "HTTP"
@@ -229,8 +330,29 @@ resource "aws_alb_target_group" "alb_target_group_codeq" {
   }
 }
 
+# For existing vpc
+resource "aws_alb_target_group" "alb_target_group_codeq_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.dockerizedSonarqube}"
+  name     = "${var.envPrefix}-ecs-codeq-tg"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = "${data.aws_vpc.existing_vpc.id}"
+  target_type = "ip"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  health_check {
+    path             = "/sessions/new"
+    matcher          = "200"
+    interval         = "60"
+    timeout          = "59"
+  }
+}
+# For new vpc
 resource "aws_lb" "alb_ecs" {
-  count = "${var.dockerizedJenkins}"
+  count = "${var.autovpc * var.dockerizedJenkins}"
   name            = "${var.envPrefix}-alb"
   internal           = false
   load_balancer_type = "application"
@@ -241,9 +363,22 @@ resource "aws_lb" "alb_ecs" {
     Name        = "${var.envPrefix}_alb"
   }
 }
+# For existing vpc
+resource "aws_lb" "alb_ecs_existing" {
+  count = "${var.dockerizedJenkins - var.autovpc}"
+  name            = "${var.envPrefix}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = ["${var.existing_vpc_sg}"]
+  subnets            = ["${aws_subnet.subnet_for_ecs_existing.*.id}"]
 
+  tags {
+    Name        = "${var.envPrefix}_alb"
+  }
+}
+# For new vpc
 resource "aws_lb" "alb_ecs_gitlab" {
-  count = "${var.scmgitlab}"
+  count = "${var.autovpc * var.dockerizedJenkins * var.scmgitlab}"
   name            = "${var.envPrefix}-gitlab-alb"
   internal           = false
   load_balancer_type = "application"
@@ -254,9 +389,22 @@ resource "aws_lb" "alb_ecs_gitlab" {
     Name        = "${var.envPrefix}_gitlab_alb"
   }
 }
+# For existing vpc
+resource "aws_lb" "alb_ecs_gitlab_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab}"
+  name            = "${var.envPrefix}-gitlab-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = ["${var.existing_vpc_sg}"]
+  subnets            = ["${aws_subnet.subnet_for_ecs_existing.*.id}"]
 
+  tags {
+    Name        = "${var.envPrefix}_gitlab_alb"
+  }
+}
+# For new vpc
 resource "aws_lb" "alb_ecs_codeq" {
-  count = "${var.dockerizedSonarqube}"
+  count = "${var.autovpc * var.dockerizedJenkins * var.dockerizedSonarqube}"
   name            = "${var.envPrefix}-codeq-alb"
   internal           = false
   load_balancer_type = "application"
@@ -267,9 +415,22 @@ resource "aws_lb" "alb_ecs_codeq" {
     Name        = "${var.envPrefix}_codeq_alb"
   }
 }
+# For existing vpc
+resource "aws_lb" "alb_ecs_codeq_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.dockerizedSonarqube}"
+  name            = "${var.envPrefix}-codeq-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = ["${var.existing_vpc_sg}"]
+  subnets            = ["${aws_subnet.subnet_for_ecs_existing.*.id}"]
 
+  tags {
+    Name        = "${var.envPrefix}_codeq_alb"
+  }
+}
+# For new vpc
 resource "aws_alb_listener" "ecs_alb_listener" {
-  count = "${var.dockerizedJenkins}"
+  count = "${var.dockerizedJenkins * var.autovpc}"
   load_balancer_arn = "${aws_lb.alb_ecs.arn}"
   port              = "80"
   protocol          = "HTTP"
@@ -279,9 +440,21 @@ resource "aws_alb_listener" "ecs_alb_listener" {
     type             = "forward"
   }
 }
+# For existing vpc
+resource "aws_alb_listener" "ecs_alb_listener_existing" {
+  count = "${var.dockerizedJenkins - var.autovpc}"
+  load_balancer_arn = "${aws_lb.alb_ecs_existing.arn}"
+  port              = "80"
+  protocol          = "HTTP"
 
+  default_action {
+    target_group_arn = "${aws_alb_target_group.alb_target_group_existing.arn}"
+    type             = "forward"
+  }
+}
+# For new vpc
 resource "aws_alb_listener" "ecs_alb_listener_gitlab" {
-  count = "${var.scmgitlab}"
+  count = "${var.dockerizedJenkins * var.autovpc * var.scmgitlab}"
   load_balancer_arn = "${aws_lb.alb_ecs_gitlab.arn}"
   port              = "80"
   protocol          = "HTTP"
@@ -291,15 +464,39 @@ resource "aws_alb_listener" "ecs_alb_listener_gitlab" {
     type             = "forward"
   }
 }
+# For existing vpc
+resource "aws_alb_listener" "ecs_alb_listener_gitlab_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab}"
+  load_balancer_arn = "${aws_lb.alb_ecs_gitlab_existing.arn}"
+  port              = "80"
+  protocol          = "HTTP"
 
+  default_action {
+    target_group_arn = "${aws_alb_target_group.alb_target_group_gitlab_existing.arn}"
+    type             = "forward"
+  }
+}
+# For new vpc
 resource "aws_alb_listener" "ecs_alb_listener_codeq" {
-  count = "${var.dockerizedSonarqube}"
+  count = "${var.autovpc * var.dockerizedJenkins * var.dockerizedSonarqube}"
   load_balancer_arn = "${aws_lb.alb_ecs_codeq.arn}"
   port              = "80"
   protocol          = "HTTP"
 
   default_action {
     target_group_arn = "${aws_alb_target_group.alb_target_group_codeq.arn}"
+    type             = "forward"
+  }
+}
+# For existing vpc
+resource "aws_alb_listener" "ecs_alb_listener_codeq_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.dockerizedSonarqube}"
+  load_balancer_arn = "${aws_lb.alb_ecs_codeq_existing.arn}"
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    target_group_arn = "${aws_alb_target_group.alb_target_group_codeq_existing.arn}"
     type             = "forward"
   }
 }
@@ -318,9 +515,9 @@ data "aws_ecs_task_definition" "ecs_task_definition_codeq" {
   count = "${var.dockerizedSonarqube}"
   task_definition = "${aws_ecs_task_definition.ecs_task_definition_codeq.family}"
 }
-
+# For new vpc
 resource "aws_ecs_service" "ecs_service" {
-  count = "${var.dockerizedJenkins}"
+  count = "${var.autovpc * var.dockerizedJenkins}"
   provisioner "local-exec" {
       command = "sleep 1m"
   }
@@ -347,9 +544,38 @@ resource "aws_ecs_service" "ecs_service" {
   }
   depends_on = ["aws_alb_target_group.alb_target_group", "aws_lb.alb_ecs"]
 }
+# For existing vpc
+resource "aws_ecs_service" "ecs_service_existing" {
+  count = "${var.dockerizedJenkins - var.autovpc}"
+  provisioner "local-exec" {
+      command = "sleep 1m"
+  }
+  name            = "${var.envPrefix}_ecs_service"
+  task_definition = "${aws_ecs_task_definition.ecs_task_definition.family}:${max("${aws_ecs_task_definition.ecs_task_definition.revision}", "${data.aws_ecs_task_definition.ecs_task_definition.revision}")}"
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  health_check_grace_period_seconds  = 3000
+  cluster =       "${aws_ecs_cluster.ecs_cluster.id}"
 
+  network_configuration {
+    security_groups    = ["${var.existing_vpc_sg}"]
+    subnets            = ["${aws_subnet.subnet_for_ecs_existing.*.id}"]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = "${aws_alb_target_group.alb_target_group_existing.arn}"
+    container_name   = "${var.envPrefix}_ecs_container"
+    container_port   = "8080"
+  }
+  provisioner "local-exec" {
+      command = "sleep 1m"
+  }
+  depends_on = ["aws_alb_target_group.alb_target_group_existing", "aws_lb.alb_ecs_existing"]
+}
+# For new vpc
 resource "aws_ecs_service" "ecs_service_gitlab" {
-  count = "${var.scmgitlab}"
+  count = "${var.autovpc * var.dockerizedJenkins * var.scmgitlab}"
   provisioner "local-exec" {
       command = "sleep 1m"
   }
@@ -376,9 +602,38 @@ resource "aws_ecs_service" "ecs_service_gitlab" {
   }
   depends_on = ["aws_alb_target_group.alb_target_group_gitlab", "aws_lb.alb_ecs_gitlab"]
 }
+# For existing vpc
+resource "aws_ecs_service" "ecs_service_gitlab_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.scmgitlab}"
+  provisioner "local-exec" {
+      command = "sleep 1m"
+  }
+  name            = "${var.envPrefix}_ecs_service_gitlab"
+  task_definition = "${aws_ecs_task_definition.ecs_task_definition_gitlab.family}:${max("${aws_ecs_task_definition.ecs_task_definition_gitlab.revision}", "${data.aws_ecs_task_definition.ecs_task_definition_gitlab.revision}")}"
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  health_check_grace_period_seconds  = 3000
+  cluster =       "${aws_ecs_cluster.ecs_cluster_gitlab.id}"
 
+  network_configuration {
+    security_groups    = ["${var.existing_vpc_sg}"]
+    subnets            = ["${aws_subnet.subnet_for_ecs_existing.*.id}"]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = "${aws_alb_target_group.alb_target_group_gitlab_existing.arn}"
+    container_name   = "${var.envPrefix}_ecs_container_gitlab"
+    container_port   = "80"
+  }
+  provisioner "local-exec" {
+      command = "sleep 4m"
+  }
+  depends_on = ["aws_alb_target_group.alb_target_group_gitlab_existing", "aws_lb.alb_ecs_gitlab_existing"]
+}
+# For new vpc
 resource "aws_ecs_service" "ecs_service_codeq" {
-  count = "${var.dockerizedSonarqube}"
+  count = "${var.dockerizedJenkins * var.autovpc * var.dockerizedSonarqube}"
   provisioner "local-exec" {
       command = "sleep 1m"
   }
@@ -404,4 +659,33 @@ resource "aws_ecs_service" "ecs_service_codeq" {
       command = "sleep 4m"
   }
   depends_on = ["aws_alb_target_group.alb_target_group_codeq", "aws_lb.alb_ecs_codeq"]
+}
+# For existing vpc
+resource "aws_ecs_service" "ecs_service_codeq_existing" {
+  count = "${(var.dockerizedJenkins - var.autovpc) * var.dockerizedSonarqube}"
+  provisioner "local-exec" {
+      command = "sleep 1m"
+  }
+  name            = "${var.envPrefix}_ecs_service_codeq"
+  task_definition = "${aws_ecs_task_definition.ecs_task_definition_codeq.family}:${max("${aws_ecs_task_definition.ecs_task_definition_codeq.revision}", "${data.aws_ecs_task_definition.ecs_task_definition_codeq.revision}")}"
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  health_check_grace_period_seconds  = 3000
+  cluster =       "${aws_ecs_cluster.ecs_cluster_codeq.id}"
+
+  network_configuration {
+    security_groups    = ["${var.existing_vpc_sg}"]
+    subnets            = ["${aws_subnet.subnet_for_ecs_existing.*.id}"]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = "${aws_alb_target_group.alb_target_group_codeq_existing.arn}"
+    container_name   = "${var.envPrefix}_ecs_container_codeq"
+    container_port   = "9000"
+  }
+  provisioner "local-exec" {
+      command = "sleep 4m"
+  }
+  depends_on = ["aws_alb_target_group.alb_target_group_codeq_existing", "aws_lb.alb_ecs_codeq_existing"]
 }

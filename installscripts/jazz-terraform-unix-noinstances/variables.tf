@@ -131,3 +131,4 @@ variable "vpc_cidr_block" {
   default     = "10.0.0.0/16"
 }
 variable "existing_vpc_ecs" { type = "string" }
+variable "existing_vpc_sg" { type = "string" }
