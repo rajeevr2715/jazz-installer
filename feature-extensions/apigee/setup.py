@@ -6,7 +6,7 @@ import argparse
 import os.path
 import terraformBugWorkaround
 from apigeeinstaller.init_apigee_install import install_proxy
-from git_config import replace_config
+from git_config import replace_config, revert_config
 
 
 class colors:
@@ -142,6 +142,12 @@ def uninstall(args):
     terraformBugWorkaround.restoreOldRoleToExistingFunctionWithCLI(getEnvPrefix(args) + "-" + gatewayFunctionName)
 
     runTerraform(getRegion(args), getAWSAccountID(), getEnvPrefix(args), False)
+    revert_config(
+        args.scm_repo,
+        args.scm_username,
+        args.scm_password,
+        args.scm_pathext
+    )
 
 
 def runTerraform(region, accountId, envPrefix, install):
