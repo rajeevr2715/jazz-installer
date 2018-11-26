@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import time
 import sys
 import subprocess
 import argparse
@@ -20,7 +21,8 @@ class colors:
 
 
 featureName = "Apigee"
-gatewayFunctionName = "jazz_apigee-proxy-aws"
+# The lambda function created has the format of ENVPREFIX-jazz-apigee-proxy-aws-STAGE
+gatewayFunctionName = "jazz-apigee-proxy-aws-prod"
 terraformGatewayResource = "aws_lambda_function.jazz-apigee-proxy"
 
 
@@ -40,7 +42,8 @@ def main():
     )
     mainParser.add_argument(
         '--jazz-stackprefix',
-        help='Specify the stackprefix of your existing Jazz installation (e.g. myjazz), your existing config will be imported'
+        help='Specify the stackprefix of your existing Jazz installation (e.g. myjazz), \
+              your existing config will be imported'
     )
 
     mainParser.add_argument(
@@ -63,12 +66,14 @@ def main():
         help='Specify the scm repo path ext (Use "scm" for bitbucket)'
     )
 
-    mainParser.add_argument("apigee-host", help="Url of the Apigee host (e.g. https://my-apigee-host)")
-    mainParser.add_argument("apigee-org", help="Name of the Apigee org you wish to use")
-    mainParser.add_argument("apigee-env", help="Name of the Apigee env you wish to use")
-    mainParser.add_argument("apigee-build", help="Version to stamp Apigee proxy with (TODO why does the user need to provide this?)")
-    mainParser.add_argument("apigee-username", help="Username to use when accessing Apigee")
-    mainParser.add_argument("apigee-password", help="Password to use when accessing Apigee")
+    mainParser.add_argument("apigee_host", help="Url of the Apigee host (e.g. https://my-apigee-host)")
+    mainParser.add_argument("apigee_org", help="Name of the Apigee org you wish to use")
+    mainParser.add_argument("apigee_env", help="Name of the Apigee env you wish to use")
+    mainParser.add_argument("apigee_svc_host", help="Url of the service API host (e.g. jazz.api.t-mobile.com)")
+    mainParser.add_argument("apigee_build", help="Version to stamp Apigee proxy with \
+                            (TODO why does the user need to provide this?)")
+    mainParser.add_argument("apigee_username", help="Username to use when accessing Apigee")
+    mainParser.add_argument("apigee_password", help="Password to use when accessing Apigee")
 
     args = mainParser.parse_args()
     args.func(args)
@@ -90,11 +95,11 @@ def install(args):
 
     # Run terraform first, as we need it's output
     runTerraform(getRegion(args), getAWSAccountID(), getEnvPrefix(args), True)
-
+    time.sleep(10)
     # TODO remove this entire module when the terraform bug is fixed
     print(
         colors.OKBLUE + 'Linking new role to existing gateway function' + colors.ENDC)
-    terraformBugWorkaround.linkNewRoleToExistingFunctionWithCLI(gatewayFunctionName)
+    terraformBugWorkaround.linkNewRoleToExistingFunctionWithCLI(getEnvPrefix(args) + "-" + gatewayFunctionName)
 
     install_proxy(
         getTerraformOutputVar("apigee-lambda-user-secret-key"),
@@ -110,8 +115,9 @@ def install(args):
 
     replace_config(
         args.apigee_host,
-        "TODO what is credID? Where does it come from?",
+        "ApigeeforJazz",
         args.apigee_env,
+        args.apigee_svc_host,
         args.apigee_org,
         args.scm_repo,
         args.scm_username,
@@ -133,7 +139,7 @@ def uninstall(args):
         colors.OKBLUE + 'Restoring old role to gateway function' + colors.ENDC)
 
     # Restore old role first, before we destroy the Terraform resources
-    terraformBugWorkaround.restoreOldRoleToExistingFunctionWithCLI(gatewayFunctionName)
+    terraformBugWorkaround.restoreOldRoleToExistingFunctionWithCLI(getEnvPrefix(args) + "-" + gatewayFunctionName)
 
     runTerraform(getRegion(args), getAWSAccountID(), getEnvPrefix(args), False)
 
@@ -155,8 +161,10 @@ def runTerraform(region, accountId, envPrefix, install):
             '-var', 'region={0}'.format(region),
             '-var', 'jazz_aws_accountid={0}'.format(accountId),
             '-var', 'env_prefix={0}'.format(envPrefix),
-            '-var', 'gateway_func_arn={0}'.format(terraformBugWorkaround.getFunctionArn(gatewayFunctionName)),
-            '-var', 'previous_role_arn={0}'.format(terraformBugWorkaround.getFunctionRole(gatewayFunctionName))
+            '-var', 'gateway_func_arn={0}'.format(terraformBugWorkaround.getFunctionArn(envPrefix + "-" +
+                                                  gatewayFunctionName)),
+            '-var', 'previous_role_arn={0}'.format(terraformBugWorkaround.getFunctionRole(envPrefix + "-" +
+                                                   gatewayFunctionName))
         ],
         cwd='./terraform')
 
