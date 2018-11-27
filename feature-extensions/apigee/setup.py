@@ -93,6 +93,8 @@ def install(args):
         "Please make sure you are using the same AWS credentials you used to install your Jazz deployment\n\n"
         + colors.ENDC)
 
+    collect_userinputs(args)
+
     # Run terraform first, as we need it's output
     runTerraform(getRegion(args), getAWSAccountID(), getEnvPrefix(args), True)
     time.sleep(10)
@@ -124,6 +126,11 @@ def install(args):
         args.scm_password,
         args.scm_pathext
     )
+    print(
+        colors.OKBLUE +
+        "Please make sure to add the credential ID as 'ApigeeforJazz' \
+         with the apigee username and password in the Jenkins\n\n"
+        + colors.ENDC)
 
 
 def uninstall(args):
@@ -131,7 +138,7 @@ def uninstall(args):
         colors.OKGREEN +
         "\nThis will remove {0} functionality from your Jazz deployment.\n".format(featureName)
         + colors.ENDC)
-
+    collect_userinputs(args)
     terraformStateSanityCheck()
 
     # TODO remove this entire module when the terraform bug is fixed
@@ -229,6 +236,22 @@ def getAWSAccountID():
     return subprocess.check_output([
         'aws', 'sts', 'get-caller-identity', '--output', 'text', '--query', 'Account'
     ]).rstrip()
+
+
+def collect_userinputs(args):
+    if not args.scm_repo:
+        args.scm_repo = raw_input("Please enter the SCM Repo: ")
+
+    if not args.scm_username:
+        args.scm_username = raw_input("Please enter the SCM Username: ")
+
+    if not args.scm_password:
+        args.scm_password = raw_input("Please enter the SCM Password: ")
+
+    if not args.scm_pathext:
+        args.scm_pathext = raw_input("Please enter the SCM Pathext (Use \"/scm\" for bitbucket): ") or "/"
+
+    return args
 
 
 main()

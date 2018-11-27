@@ -1,20 +1,11 @@
 import subprocess
 import urllib
+import re
 # TODO drop this whole script once we have API-based config implemented
 
 
-def replace_config(apigeeHost, apigeeCredId, apigeeEnv, apigeeSvcHost, apigeeOrg, repo, username, password, pathext):
-    if not repo:
-        repo = raw_input("Please enter the SCM Repo: ")
-
-    if not username:
-        username = raw_input("Please enter the SCM Username: ")
-
-    if not password:
-        password = raw_input("Please enter the SCM Password: ")
-
-    if not pathext:
-        pathext = raw_input("Please enter the SCM Pathext (Use \"/scm\" for bitbucket): ") or "/"
+def replace_config(apigeeHost, apigeeCredId, apigeeEnv, apigeeSvcHost,
+                   apigeeOrg, repo, username, password, pathext='/'):
 
     configFile = "jazz-installer-vars.json"
     buildFolder = './jazz-build-module/'
@@ -29,10 +20,8 @@ def replace_config(apigeeHost, apigeeCredId, apigeeEnv, apigeeSvcHost, apigeeOrg
     filedata = filedata.replace('{MGMT_HOST}', apigeeHost)
     filedata = filedata.replace('{SVC_HOST}', apigeeSvcHost)
     # TODO add more
-    # Write the file out again
-    with open(buildFolder+configFile, 'w') as file:
-        file.write(filedata)
-    push_configjson(buildFolder, configFile, "'Adding Apigee feature'")
+
+    push_configjson(filedata, buildFolder, configFile, "'Adding Apigee feature'")
 
 
 def fetch_configjson(repo, username, password, pathext, configFile, buildFolder):
@@ -57,7 +46,10 @@ def fetch_configjson(repo, username, password, pathext, configFile, buildFolder)
     return filedata
 
 
-def push_configjson(buildFolder, configFile, message):
+def push_configjson(filedata, buildFolder, configFile, message):
+    # Write the file out again
+    with open(buildFolder+configFile, 'w') as file:
+        file.write(filedata)
     # Commit the changes
     subprocess.check_call(["git", "add", configFile], cwd=buildFolder)
     subprocess.check_call(["git", "commit", "-m", message], cwd=buildFolder)
@@ -66,24 +58,9 @@ def push_configjson(buildFolder, configFile, message):
 
 
 # For Uninstall
-def revert_config(repo, username, password, pathext):
-    if not repo:
-        repo = raw_input("Please enter the SCM Repo: ")
-
-    if not username:
-        username = raw_input("Please enter the SCM Username: ")
-
-    if not password:
-        password = raw_input("Please enter the SCM Password: ")
-
-    if not pathext:
-        pathext = raw_input("Please enter the Splunk Pathext (Use \"/scm\" for bitbucket): ") or "/"
-
+def revert_config(repo, username, password, pathext='/'):
     configFile = "jazz-installer-vars.json"
     buildFolder = './jazz-build-module/'
-    fetch_configjson(repo, username, password, pathext, configFile, buildFolder)
-    subprocess.call([
-        'sed', "-i\'.bak\'",
-        r's|\("%s": \)\(.*\)|\1%s|g' % ("ENABLE_APIGEE", "false,"), buildFolder+configFile
-    ])
-    push_configjson(buildFolder, configFile, "'Removing Apigee feature'")
+    filedata = fetch_configjson(repo, username, password, pathext, configFile, buildFolder)
+    filedata = re.sub(r'("%s": )(.*)|g' % ("ENABLE_APIGEE"), '"ENABLE_APIGEE": false,', filedata)
+    push_configjson(filedata, buildFolder, configFile, "'Removing Apigee feature'")
