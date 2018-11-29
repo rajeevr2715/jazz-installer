@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-import time
 import sys
 import subprocess
 import argparse
@@ -70,8 +69,6 @@ def main():
     mainParser.add_argument("apigee_org", help="Name of the Apigee org you wish to use")
     mainParser.add_argument("apigee_env", help="Name of the Apigee env you wish to use")
     mainParser.add_argument("apigee_svc_host", help="Url of the service API host (e.g. jazz.api.t-mobile.com)")
-    mainParser.add_argument("apigee_build", help="Version to stamp Apigee proxy with \
-                            (TODO why does the user need to provide this?)")
     mainParser.add_argument("apigee_username", help="Username to use when accessing Apigee")
     mainParser.add_argument("apigee_password", help="Password to use when accessing Apigee")
 
@@ -97,7 +94,6 @@ def install(args):
 
     # Run terraform first, as we need it's output
     runTerraform(getRegion(args), getAWSAccountID(), getEnvPrefix(args), True)
-    time.sleep(10)
     # TODO remove this entire module when the terraform bug is fixed
     print(
         colors.OKBLUE + 'Linking new role to existing gateway function' + colors.ENDC)
@@ -110,7 +106,7 @@ def install(args):
         args.apigee_host,
         args.apigee_org,
         args.apigee_env,
-        args.apigee_build,
+        "1.0",
         args.apigee_username,
         args.apigee_password
     )

@@ -191,8 +191,6 @@ def deploy_shared_flows(host, org, env, build, username, password):
                 undeploy(host, org, env, item, deployedVersion, username, password)
             revision = import_bundle(zfPath, host, org, item, username, password)
             deploy(host, org, env, item, revision, username, password)
-            # zfPath is a string
-            # zfPath.unlink()
     print_banner("Sharedflows deployment Complete")
 
 
@@ -233,7 +231,6 @@ def install_proxy(secretKey, reg, lambdaARN, host, org, env,
     host -- Apigee host
     org -- Apigee org to apply this took
     env -- Apigee env to userName
-    build -- build number to stamp sharedflow/proxy with?
     username -- Apigee instance basic auth username
     password -- apigee instance basic auth password
     """

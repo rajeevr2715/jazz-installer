@@ -1,5 +1,6 @@
 import json
 import subprocess
+import retrying
 
 
 terraformNewGatewayRoleOutput = "apigee-lambda-gateway-role-arn"
@@ -7,6 +8,10 @@ terraformPreviousRoleOutput = "previous-role-arn"
 
 
 # Replaces function's role with one created by Terraform
+# Amazon needs a few seconds to replicate the new role through all regionsself.
+# So, the fix here is to wait a few seconds before creating the Lambda function.
+# Ref: https://tinyurl.com/ybylpzfw and https://tinyurl.com/ya9gh8eh
+@retrying.retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def linkNewRoleToExistingFunctionWithCLI(functionName):
     updateFunctionRole(functionName, getRoleArnFromTerraform())
 
