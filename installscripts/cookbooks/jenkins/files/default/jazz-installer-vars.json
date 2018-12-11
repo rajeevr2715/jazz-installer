@@ -8,6 +8,10 @@
         "CLOUDFRONT_ORIGIN_ID": "",
         "ACCOUNTID": "",
         "REGION": "",
+        "DEFAULTS": {
+            "REGION": "",
+            "ACCOUNTID": ""
+        },
         "ROLEID": "",
         "ES_HOSTNAME": "",
         "COGNITO": {
@@ -60,6 +64,9 @@
         },
         "SWAGGER": {
             "EDITOR_URL": "http://editor.swagger.io/?url="
+        },
+        "DEFAULTS": {
+            "PROVIDER": "aws"
         }
     },
     "JENKINS": {
