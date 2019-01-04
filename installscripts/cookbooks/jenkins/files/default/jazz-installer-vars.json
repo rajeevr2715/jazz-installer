@@ -12,6 +12,7 @@
             "REGION": "",
             "ACCOUNTID": ""
         },
+        "ACCOUNTS": [],
         "ROLEID": "",
         "ES_HOSTNAME": "",
         "COGNITO": {
