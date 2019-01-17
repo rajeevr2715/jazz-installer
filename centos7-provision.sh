@@ -9,7 +9,7 @@
 # URLS
 TERRAFORM_URL="https://releases.hashicorp.com/terraform/0.11.10/terraform_0.11.10_linux_amd64.zip"
 ATLASSIAN_CLI_URL="https://bobswift.atlassian.net/wiki/download/attachments/16285777/atlassian-cli-6.7.1-distribution.zip"
-INSTALLER_GITHUB_URL="https://github.com/tmobile/jazz-installer.git"
+INSTALLER_GITHUB_URL="https://github.com/rajeevr2715/jazz-installer.git"
 PIP_URL="https://bootstrap.pypa.io/get-pip.py"
 
 # Installation directory
@@ -167,6 +167,10 @@ function install_packages () {
     # Installing epel
     sudo yum install epel-release -y &> /dev/null &
     spin_wheel $! "Installing epel"
+
+    # Installing jq
+    sudo yum install jq -y &> /dev/null &
+    spin_wheel $! "Installing jq"
 
     # Installing beautifulsoup4
     sudo yum install python-beautifulsoup4 -y &> /dev/null &
