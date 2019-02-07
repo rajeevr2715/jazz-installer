@@ -97,4 +97,24 @@ resource "null_resource" "update_jenkins_configs" {
   provisioner "local-exec" {
     command = "${var.configureSubnet_cmd} ${lookup(var.jenkinsservermap, "jenkins_security_group")} ${lookup(var.jenkinsservermap, "jenkins_subnet")} ${var.envPrefix} ${var.jenkinsjsonpropsfile}"
   }
+
+  # Destionation policy
+  provisioner "local-exec" {
+    command = "${var.modifyPropertyFile_cmd} PROD_DEST_EAST1_ARN ${aws_cloudwatch_log_destination.prod_east1_kinesis.arn} ${var.jenkinsjsonpropsfile}"
+  }
+  provisioner "local-exec" {
+    command = "${var.modifyPropertyFile_cmd} DEV_DEST_EAST1_ARN ${aws_cloudwatch_log_destination.dev_east1_kinesis.arn} ${var.jenkinsjsonpropsfile}"
+  }
+  provisioner "local-exec" {
+    command = "${var.modifyPropertyFile_cmd} STG_DEST_EAST1_ARN ${aws_cloudwatch_log_destination.stg_east1_kinesis.arn} ${var.jenkinsjsonpropsfile}"
+  }
+  provisioner "local-exec" {
+    command = "${var.modifyPropertyFile_cmd} PROD_DEST_WEST2_ARN ${aws_cloudwatch_log_destination.prod_west2_kinesis.arn} ${var.jenkinsjsonpropsfile}"
+  }
+  provisioner "local-exec" {
+    command = "${var.modifyPropertyFile_cmd} DEV_DEST_WEST2_ARN ${aws_cloudwatch_log_destination.dev_west2_kinesis.arn} ${var.jenkinsjsonpropsfile}"
+  }
+  provisioner "local-exec" {
+    command = "${var.modifyPropertyFile_cmd} STG_DEST_WEST2_ARN ${aws_cloudwatch_log_destination.stg_west2_kinesis.arn} ${var.jenkinsjsonpropsfile}"
+  }
 }

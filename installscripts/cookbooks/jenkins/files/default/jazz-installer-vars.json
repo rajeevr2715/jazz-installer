@@ -13,6 +13,18 @@
             "REGION": "",
             "ACCOUNTID": ""
         },
+        "DESTINATIONS": {
+            "US-EAST-1": {
+                "PROD": "{PROD_DEST_EAST1_ARN}",
+                "DEV": "{DEV_DEST_EAST1_ARN}",
+                "STG": "{STG_DEST_EAST1_ARN}"
+              },
+              "US-WEST-2": {
+                "PROD": "{PROD_DEST_WEST2_ARN}",
+                "DEV": "{DEV_DEST_WEST2_ARN}",
+                "STG": "{STG_DEST_WEST2_ARN}"
+              }
+        },
         "PLATFORMSERVICES_ROLEID": "",
         "USERSERVICES_ROLEID": "",
         "ES_HOSTNAME": "",
