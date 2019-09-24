@@ -43,7 +43,7 @@ EOF
 
 if [ "$scm_type" == "gitlab" ]; then
   $jenkins_cli_command groovy = <<EOF
-  def cmd = ['/bin/sh',  '-c',  'sed -i "s/ip/$scm_elb/g" $jenkinshome/com.dabsquared.gitlabjenkins.connection.GitLabConnectionConfig.xml']
+  def cmd = ['/bin/sh',  '-c',  'sed -i "" "s/ip/$scm_elb/g" $jenkinshome/com.dabsquared.gitlabjenkins.connection.GitLabConnectionConfig.xml']
   cmd.execute()
 EOF
   echo "GITLAB TOKEN: $gitlabtoken"

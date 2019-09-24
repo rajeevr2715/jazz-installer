@@ -10,12 +10,12 @@ resource "null_resource" "updateJenkinsChefCookbook" {
 
   # Update cookbook with jenkins elb
   provisioner "local-exec" {
-    command = "sed -i 's|default\\['\\''jenkinselb'\\''\\].*.|default\\['\\''jenkinselb'\\''\\]='\\''${lookup(var.jenkinsservermap, "jenkins_elb")}'\\''|g' ${var.jenkinsattribsfile}"
+    command = "sed -i '' 's|default\\['\\''jenkinselb'\\''\\].*.|default\\['\\''jenkinselb'\\''\\]='\\''${lookup(var.jenkinsservermap, "jenkins_elb")}'\\''|g' ${var.jenkinsattribsfile}"
   }
 
   #Update Jenkins Chef cookbook attributes
   provisioner "local-exec" {
-    command = "sed -i 's|jenkinsuser:jenkinspasswd|${lookup(var.jenkinsservermap, "jenkinsuser")}:${lookup(var.jenkinsservermap, "jenkinspasswd")}|g' ${var.cookbooksSourceDir}/jenkins/files/default/authfile"
+    command = "sed -i '' 's|jenkinsuser:jenkinspasswd|${lookup(var.jenkinsservermap, "jenkinsuser")}:${lookup(var.jenkinsservermap, "jenkinspasswd")}|g' ${var.cookbooksSourceDir}/jenkins/files/default/authfile"
   }
 
   #END chef cookbook edits

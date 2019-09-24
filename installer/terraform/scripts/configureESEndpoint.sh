@@ -3,7 +3,7 @@
 # TODO This should be in Python + drop curl dep
 
 ES_ENDPOINT=$1
-sed -i "s/{inst_elastic_search_hostname}/$ES_ENDPOINT/g " ./jazz-core/core/jazz_cloud-logs-streamer/index.js
+sed -i "" "s/{inst_elastic_search_hostname}/$ES_ENDPOINT/g " ./jazz-core/core/jazz_cloud-logs-streamer/index.js
 # this is done in bitbucketclient.sh since that is last script to run in this demo with existing instances
 
 # Add permission to Lambda function

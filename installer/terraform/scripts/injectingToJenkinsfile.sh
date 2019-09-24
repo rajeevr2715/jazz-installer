@@ -26,13 +26,13 @@ inject_bootstrap_variables()
 
   # SED on the files found by traversing the array. It is assumed that all the jenkinsfiles in the core repository must has these 3 varibales defined.
   for i in "${jenkinsfile_arr[@]}"; do
-    sed -i "s,^@Field def repo_credential_id,@Field def repo_credential_id = \"$repo_credential_id\"," "$i"
-    sed -i "s,^@Field def aws_credential_id,@Field def aws_credential_id = \"$aws_credential_id\"," "$i"
-    sed -i "s,^@Field def region,@Field def region = \"$region\"," "$i"
-    sed -i "s,^@Field def instance_prefix,@Field def instance_prefix = \"$instance_prefix\"," "$i"
-    sed -i "s,^@Field def repo_base,@Field def repo_base = \"$repo_base\"," "$i"
-    sed -i "s,^@Field def repo_core,@Field def repo_core = \"$repo_core\"," "$i"
-	  sed -i "s,^@Field def scm_type,@Field def scm_type = \"$scm_type\"," "$i"
+    sed -i "" "s,^@Field def repo_credential_id,@Field def repo_credential_id = \"$repo_credential_id\"," "$i"
+    sed -i "" "s,^@Field def aws_credential_id,@Field def aws_credential_id = \"$aws_credential_id\"," "$i"
+    sed -i "" "s,^@Field def region,@Field def region = \"$region\"," "$i"
+    sed -i "" "s,^@Field def instance_prefix,@Field def instance_prefix = \"$instance_prefix\"," "$i"
+    sed -i "" "s,^@Field def repo_base,@Field def repo_base = \"$repo_base\"," "$i"
+    sed -i "" "s,^@Field def repo_core,@Field def repo_core = \"$repo_core\"," "$i"
+	  sed -i "" "s,^@Field def scm_type,@Field def scm_type = \"$scm_type\"," "$i"
   done
 
   cd ..

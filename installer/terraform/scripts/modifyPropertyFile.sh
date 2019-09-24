@@ -14,9 +14,9 @@ method=$4 # Should be BY_KEY, BY_VALUE, ARRAY or empty. If empty, will default t
 property_value=$(sed 's/[]\/$*.^|[]/\\&/g' <<< "$property_value")
 if [ "$method" == "ARRAY" ]; then
   property_value=$(sed "s/'/\"/g" <<< "$property_value")
-  sed -i "s/$property_key\".*.$/$property_key\" : $property_value/g" "$property_file_json"
+  sed -i "" "s/$property_key\".*.$/$property_key\" : $property_value/g" "$property_file_json"
 elif [ "$method" == "BY_VALUE" ]; then
-  sed -i "s/$property_key/$property_value/g" "$property_file_json"
+  sed -i "" "s/$property_key/$property_value/g" "$property_file_json"
 else #this is the BY_KEY case (default)
-  sed -i "s/\"$property_key\".*\"\"/\"$property_key\" : \"$property_value\"/g" "$property_file_json"
+  sed -i "" "s/\"$property_key\".*\"\"/\"$property_key\" : \"$property_value\"/g" "$property_file_json"
 fi
